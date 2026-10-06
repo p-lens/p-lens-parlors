@@ -1,0 +1,11 @@
+# Sent with every file of the list. Cloudflare reads this file and does not
+# serve it.
+#
+# The list is open data, read by pages on other sites, survey.p-lens.jp and
+# app.p-lens.jp among them, so any site may read it.
+/*
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+
+/*.jsonl
+  Content-Type: application/x-ndjson; charset=utf-8

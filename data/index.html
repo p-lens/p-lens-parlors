@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="日本のパチンコ・パチスロ店舗の公開一覧です。JSON Lines 形式で、Open Database License のもとに誰でも使えます。" />
+    <title>P-Lens 店舗一覧</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem 4rem;
+        font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+        line-height: 1.8;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.25rem;
+      }
+      h2 {
+        font-size: 1rem;
+        margin: 2.25rem 0 0.5rem;
+      }
+      p,
+      ul {
+        margin: 0.5rem 0;
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 0.875rem;
+      }
+      pre {
+        overflow-x: auto;
+        padding: 0.75rem 1rem;
+        border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+        border-radius: 0.5rem;
+        line-height: 1.6;
+      }
+      .muted {
+        opacity: 0.7;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>P-Lens 店舗一覧</h1>
+    <p class="muted">parlors.p-lens.jp</p>
+
+    <p>日本のパチンコ・パチスロ店舗の公開一覧です。ここは人が見るページではなく、プログラムが読むためのデータの置き場所です。誰でも、登録なしで読めます。</p>
+
+    <h2>ファイル</h2>
+    <ul>
+      <li><a href="/parlors.jsonl">parlors.jsonl</a>：座標のある店舗</li>
+      <li><a href="/unplaced.jsonl">unplaced.jsonl</a>：座標がまだわかっていない店舗</li>
+      <li><a href="/rejections.jsonl">rejections.jsonl</a>：却下した申請</li>
+    </ul>
+    <p>どれも JSON Lines 形式で、1 行が 1 店舗です。ほかのサイトのページからも、そのまま読み込めます。</p>
+
+    <pre>curl https://parlors.p-lens.jp/parlors.jsonl
+
+{"id":"osm:way/…","name":"…","reading":"…","prefecture":"…","address":"…","lat":…,"lon":…}</pre>
+
+    <p>項目の意味、データの出どころ、編集の方針は <a href="https://github.com/p-lens/p-lens-parlors">リポジトリ</a> に書いてあります。</p>
+
+    <h2>使うとき</h2>
+    <p><a href="https://opendatacommons.org/licenses/odbl/">Open Database License（ODbL）</a> のもとで公開しています。使うときは次のように表示し、このデータベースから派生したデータベースは ODbL のもとに置いてください。</p>
+    <pre>© P-Lens contributors, © OpenStreetMap contributors</pre>
+
+    <h2>間違いを見つけたら</h2>
+    <p>載っていない店舗、座標、閉店、店名や読みの誤りは、<a href="https://survey.p-lens.jp/">P-Lens P店調査</a> から知らせてください。一覧を検索したり、地図で見たりするのもそちらでできます。</p>
+  </body>
+</html>

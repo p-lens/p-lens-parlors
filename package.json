@@ -1,0 +1,12 @@
+{
+  "name": "p-lens-parlors",
+  "private": true,
+  "type": "module",
+  "license": "ODbL-1.0",
+  "scripts": {
+    "check": "bun tools/check.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
+  }
+}
