@@ -26,7 +26,7 @@ One parlor a line:
 | `name` | always | the operator's own name when known, else the name it is a member of the 貯玉補償基金 under, else OpenStreetMap's; no two parlors share one, widths, case, spaces and marks aside, so where two go by one name each is written with its place after it, as the fund writes some: `ネバーランド(八戸)` |
 | `reading` | always | hiragana |
 | `branchReading` | sometimes | the branch's reading as the operator writes it |
-| `keywords` | sometimes | other names it is found by: OpenStreetMap's, where `name` is not it |
+| `keywords` | sometimes | other names it is found by: OpenStreetMap's, or the one it is a member of the 貯玉補償基金 under, where `name` is not it |
 | `prefecture` | always | one of the 47 |
 | `address` | when known | after the prefecture |
 | `addressSource` | with `address` | `operator` (its own site), `chodama` (the 貯玉補償基金's member list), `osm-tags` (the element's `addr:*`), or `osm-areas` (the OpenStreetMap administrative areas its position falls in) |

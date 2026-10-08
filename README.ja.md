@@ -22,7 +22,7 @@ parlors.p-lens.jp で静的ファイルとして公開します。app.p-lens.jp 
 | `name` | 必ず | 運営会社自身の店名が分かればそれ、なければ貯玉補償基金に加盟している名前、それもなければ OpenStreetMap の名前。全角半角・大文字小文字・空白・記号の違いを除いて、同じ名前の店舗は 2 つありません。同じ名前で呼ばれる店舗が 2 つあるときは、基金自身の書き方にならって、それぞれ名前のあとに所在地を付けます（例：`ネバーランド(八戸)`） |
 | `reading` | 必ず | ひらがな |
 | `branchReading` | ある場合 | 運営会社が書いている支店名の読み |
-| `keywords` | ある場合 | 検索に使うほかの名前。`name` と違うときの OpenStreetMap の名前 |
+| `keywords` | ある場合 | 検索に使うほかの名前。`name` と違うときの OpenStreetMap の名前や、貯玉補償基金に加盟している名前 |
 | `prefecture` | 必ず | 47 都道府県のいずれか |
 | `address` | 分かる場合 | 都道府県より後ろ |
 | `addressSource` | `address` とともに | `operator`（運営会社のサイト）、`chodama`（貯玉補償基金の加盟店一覧）、`osm-tags`（要素の `addr:*`）、`osm-areas`（位置が含まれる OpenStreetMap の行政区域）のいずれか |
