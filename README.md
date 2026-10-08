@@ -22,11 +22,11 @@ One parlor a line:
 
 | field | | |
 |---|---|---|
-| `id` | always | `osm:<type>/<id>` for a parlor placed on an OpenStreetMap element, `cf:<hash>` for a member of the 貯玉補償基金 not yet placed, `op:<chain>:<hash>` for one known from its operator alone |
-| `name` | always | the operator's own name when known, else the name it is a member of the 貯玉補償基金 under, else OpenStreetMap's; no two parlors share one, widths, case, spaces and marks aside, so where two go by one name each is written with its place after it, as the fund writes some: `ネバーランド(八戸)` |
+| `id` | always | given when a parlor is first listed and never changed: `osm:<type>/<id>` for one listed placed on an OpenStreetMap element, `cf:<hash>` for a member of the 貯玉補償基金 listed unplaced, `op:<chain>:<hash>` for one listed from its operator alone. A parlor placed later keeps its `cf:` or `op:` id |
+| `name` | always | the operator's own name when known, else the name it is a member of the 貯玉補償基金 under, else OpenStreetMap's — but where the fund lists separate members at one address and their operator names them as one, each goes by the name it is a member under; no two parlors share one, widths, case, spaces and marks aside, so where two go by one name each is written with its place after it, as the fund writes some: `ネバーランド(八戸)` |
 | `reading` | always | hiragana |
 | `branchReading` | sometimes | the branch's reading as the operator writes it |
-| `keywords` | sometimes | other names it is found by: OpenStreetMap's, or the one it is a member of the 貯玉補償基金 under, where `name` is not it |
+| `keywords` | sometimes | other names it is found by: OpenStreetMap's, or the one it is a member of the 貯玉補償基金 under, where `name` is not it, or the one its operator gives several members together |
 | `prefecture` | always | one of the 47 |
 | `address` | when known | after the prefecture |
 | `addressSource` | with `address` | `operator` (its own site), `chodama` (the 貯玉補償基金's member list), `osm-tags` (the element's `addr:*`), or `osm-areas` (the OpenStreetMap administrative areas its position falls in) |
@@ -61,8 +61,13 @@ One parlor a line:
   is reported through survey.p-lens.jp.
 - **Official names, pages and addresses** come from the store lists operators
   publish on their own websites, each linked in `officialUrl`. Where an
-  operator names a parlor, that name is the parlor's `name`. Names and
-  addresses are facts; nothing else is taken from those sites.
+  operator names a parlor, that name is the parlor's `name`. But members the
+  fund lists separately at one address each keep their own savings, so each
+  is a parlor under the fund's name and address even where the operator
+  names them as one, and the operator's name is kept in `keywords`; where
+  the operator's parlor was placed on an OpenStreetMap element, each member
+  is placed on that same element. Names and addresses are facts; nothing
+  else is taken from those sites.
 - **Parlors only OpenStreetMap knows** keep its name, and an address from the
   element's own `addr:*` tags where it has them, else from the OpenStreetMap
   administrative areas its position falls in — 市区町村, and 町丁目 where
