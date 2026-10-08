@@ -3,8 +3,14 @@
 #
 # The list is open data, read by pages on other sites, survey.p-lens.jp and
 # app.p-lens.jp among them, so any site may read it.
+#
+# Each file is sent with its version in ETag, which changes when the file
+# does. A page on another site is let read it, so app.p-lens.jp can ask what
+# version a file is at — a HEAD request, a few hundred bytes — and read the
+# megabytes only when it has moved.
 /*
   Access-Control-Allow-Origin: *
+  Access-Control-Expose-Headers: ETag
   X-Content-Type-Options: nosniff
 
 /*.jsonl

@@ -120,7 +120,9 @@ Cloudflare comes with may be too old to read `bun.lock`, and the build stops.
 What goes where is in `wrangler.jsonc`, the headers sent with the files in
 `data/_headers`, and what someone opening parlors.p-lens.jp is shown in
 `data/index.html`. The list is read by pages on other sites, so any site may
-read it.
+read it. Each file is sent with its version in `ETag`, which other sites are
+let read: app.p-lens.jp asks for the versions alone and reads a file only when
+its version has moved.
 
 ## Taking a report in
 
