@@ -114,7 +114,7 @@ Cloudflare の設定（Workers ＞ このリポジトリを接続）
 survey.p-lens.jp で送られた報告は、このリポジトリの issue になります（ラベルは `survey`、`parlor` と、`add`・`locate`・`gone`・`amend` のいずれか）。issue には確認のための表と、GeoJSON としての記録が入っています。
 
 1. issue を読み、出どころと内容を確かめる
-2. `data/parlors.jsonl` または `data/unplaced.jsonl` を直す。座標の分かった店舗は `unplaced.jsonl` から `parlors.jsonl` へ移す。「コーナーとレート」は `data/tiers.jsonl` に、報告の「確認した日」を `checked` とした新しい行として足す（前の行は書き換えない。種別はパチンコを `pachinko`、パチスロを `pachislot`、レート 4 は `4円`、再プレイ払出・減数は `replay` の `paidOut`・`deducted`）、「特殊景品」のうち景品の名前と要る玉数・枚数はそのコーナーの `prizes` に書く。「特殊景品」の交換所で受け取った額と「特殊景品交換所の名前」は、このリポジトリではなく [p-lens-brokers](https://github.com/p-lens/p-lens-brokers) に、観測として書く
+2. `data/parlors.jsonl` または `data/unplaced.jsonl` を直す。座標の分かった店舗は `unplaced.jsonl` から `parlors.jsonl` へ移す。「コーナーとレート」は `data/tiers.jsonl` に、報告の「確認した日」を `checked` とした新しい行として足す（前の行は書き換えない。コーナーの「4円パチンコ」は `pachinko` の `4円`、「20円スロット」は `pachislot` の `20円`、貸玉数・貸メダル数は `rental`、再プレイ払出・減数は `replay` の `paidOut`・`deducted`）、「特殊景品」の景品の名前と必要な数は、そのコーナーの `prizes` に書く。交換所で受け取った額は issue には載りません。survey.p-lens.jp がそこだけ取り分けて、[p-lens-brokers](https://github.com/p-lens/p-lens-brokers) に観測として載せます
 3. `bun run check`
 4. コミットのメッセージに `Closes #番号` と書いて `main` に入れる
 

@@ -185,13 +185,13 @@ to review and the record as GeoJSON.
    is now known moves from `unplaced.jsonl` to `parlors.jsonl`. A parlor's
    corners and their rates go into `data/tiers.jsonl` as a new line, its
    `checked` the day the report says they were seen, the lines before left as
-   they are — パチンコ as
-   `pachinko`, パチスロ as `pachislot`, a rate of 4 as `4円`, the replay's two
+   they are — the corner 4円パチンコ as `pachinko`'s `4円`, 20円スロット as
+   `pachislot`'s `20円`, 貸玉数 or 貸メダル数 as `rental`, the replay's two
    counts as `replay`'s `paidOut` and `deducted` — and of its special prizes,
-   each prize's name and the balls or medals it takes into that corner's
-   `prizes`. What the reporter received for a prize at the broker, and the
-   broker's name, go not into this repository but into
-   [p-lens-brokers](https://github.com/p-lens/p-lens-brokers), as an
+   each prize's name and the count it takes into that corner's `prizes`. What
+   was received for a prize at the broker is not in the issue: survey.p-lens.jp
+   takes that part out and sets it down in
+   [p-lens-brokers](https://github.com/p-lens/p-lens-brokers) as an
    observation.
 3. `bun run check`
 4. Commit with `Closes #number` in the message, and get it onto `main`.
