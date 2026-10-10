@@ -10,6 +10,7 @@ An open list of pachinko and pachislot parlors in Japan, kept for P-Lens
 data/parlors.jsonl     parlors with a position
 data/unplaced.jsonl    parlors known from the 貯玉補償基金 or their operator, not yet placed on the map
 data/rejections.jsonl  submissions turned down, for app.p-lens.jp to show
+data/tiers.jsonl       each parlor's corners and their rates, for the parlors someone reported
 ```
 
 Published as static files at parlors.p-lens.jp. app.p-lens.jp reads
@@ -39,6 +40,52 @@ One parlor a line:
 | `submissions` | later | survey.p-lens.jp submissions this parlor answers |
 
 `rejections.jsonl`: `{"submission", "reason"?}`.
+
+### Corners and their rates (`tiers.jsonl`)
+
+Which corners a parlor has by rate, what each rents at and replays at, and the
+balls or medals each kind of its special prizes takes, are kept in a file apart
+from the list. One line is one parlor as checked on one
+day, tied to the list by its `id` alone. Only parlors someone reported are in it, and most
+are not.
+
+```json
+{"id":"osm:way/…","tiers":{"pachinko":{"4円":{"rental":250,"replay":{"paidOut":125,"deducted":133},"prizes":{"大景品":1400,"小景品":140}},"1円":{"rental":1000}},"pachislot":{"20円":{"rental":50,"prizes":{"小景品":28}}}},"checked":"2026-10-11","submissions":["…"]}
+```
+
+| Field | | |
+|---|---|---|
+| `id` | always | The `id` of a parlor in `parlors.jsonl` or `unplaced.jsonl`. A parlor has a line for each day it was checked |
+| `tiers` | always | Under `pachinko` and `pachislot`, the parlor's corners keyed by name — `4円`, `1円`, `20円`, `5円`, the rate the parlor advertises. As many corners as it has |
+| `tiers.*.*.rental` | when known | The rental: balls or medals for ¥1,000 |
+| `tiers.*.*.replay` | when known | The replay: `paidOut` (what it pays out) and `deducted` (what it takes off the savings), the same number where there is no fee |
+| `tiers.*.*.prizes` | when known | The special prizes: under each prize's name as the parlor calls it (`大景品`, `小景品`, …), the balls or medals one of it takes. The smallest prize is the least that can be exchanged |
+| `checked` | always | The day the line's facts were checked (YYYY-MM-DD): that they held that day, not since when. A change posted before it comes is written with the day it begins, so the day may be up to half a year ahead |
+| `submissions` | later | The reports at survey.p-lens.jp the line was made from |
+
+Rates change. What is checked again is added as a line with its own `checked`,
+and the line before is not rewritten. What a corner is now is the line with the
+latest `checked` not after today among those that name the corner; earlier
+lines are kept as what held on their day, and a line of a day still to come
+is notice of what will hold then. A line names only the corners checked that day, so a
+corner it leaves out was not looked at then, not closed.
+
+A corner says only what is known of it. `{}` says no more than that the parlor
+has a corner at that rate.
+
+A parlor rents balls and medals, takes them back on a replay and gives special
+prizes for them; it exchanges nothing for money. Here too a parlor's corner has
+its `prizes` — each prize and the balls or medals it takes — and no yen. The
+special prizes are bought by a broker (特殊景品交換所, the booth that buys
+them) that is not the parlor; what a prize comes to there is the broker's
+affair, and nothing of it is kept in this repository. What players saw
+special prizes come to is set apart in a repository of its own,
+[p-lens-brokers](https://github.com/p-lens/p-lens-brokers).
+
+The file is kept apart from the list **on purpose**. It includes a number
+parlors do not state in public, so the file can be removed alone should
+publishing it have to stop. Removing it does nothing to the list.
+app.p-lens.jp does not read it.
 
 ## Where the data comes from
 
@@ -82,6 +129,9 @@ One parlor a line:
   [Sudachi](https://github.com/WorksApplications/Sudachi) (SudachiDict,
   Apache-2.0). A generated reading may be wrong; corrections are welcome
   through survey.p-lens.jp.
+- **Corners and their rates** come from reports taken at survey.p-lens.jp and
+  nowhere else: what the reporter saw on the parlor's boards, or found in
+  taking prizes there and to the broker. Nothing is taken from another site.
 - **Reports** taken at survey.p-lens.jp are first-hand (seen on site or on the
   operator's own site), given under CC0 by their contributors, and reviewed
   before they are merged.
@@ -132,7 +182,17 @@ to review and the record as GeoJSON.
 
 1. Read the issue, and check its source and what it says.
 2. Edit `data/parlors.jsonl` or `data/unplaced.jsonl`. A parlor whose position
-   is now known moves from `unplaced.jsonl` to `parlors.jsonl`.
+   is now known moves from `unplaced.jsonl` to `parlors.jsonl`. A parlor's
+   corners and their rates go into `data/tiers.jsonl` as a new line, its
+   `checked` the day the report says they were seen, the lines before left as
+   they are — パチンコ as
+   `pachinko`, パチスロ as `pachislot`, a rate of 4 as `4円`, the replay's two
+   counts as `replay`'s `paidOut` and `deducted` — and of its special prizes,
+   each prize's name and the balls or medals it takes into that corner's
+   `prizes`. What the reporter received for a prize at the broker, and the
+   broker's name, go not into this repository but into
+   [p-lens-brokers](https://github.com/p-lens/p-lens-brokers), as an
+   observation.
 3. `bun run check`
 4. Commit with `Closes #number` in the message, and get it onto `main`.
 

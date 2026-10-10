@@ -54,6 +54,67 @@ const parlorFindings = (value: unknown, placed: boolean): readonly { readonly le
   ]
 }
 
+const GAMES = new Set(["pachinko", "pachislot"])
+
+/** A corner's name as a parlor's board says its rate: `4円`, `0.5円`, `20円`. */
+const TIER = /^\d+(\.\d+)?円$/
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/
+
+const isCount = (value: unknown): boolean => typeof value === "number" && Number.isInteger(value) && value > 0
+
+const onlyKeys = (value: Json, known: readonly string[]): boolean => Object.keys(value).every((key) => known.includes(key))
+
+/**
+ * Whether a corner's terms read: each of them left out or a whole number
+ * above zero, and nothing else said. A parlor rents tokens, takes them back
+ * on a replay, and gives special prizes for them: each kind of prize by
+ * its name, with the tokens it takes. It exchanges nothing for money, so a
+ * corner has `prizes` and never an exchange, and no yen.
+ */
+const isTier = (value: unknown): boolean => {
+  if (!isJson(value) || !onlyKeys(value, ["rental", "replay", "prizes"])) return false
+  const { rental, replay, prizes } = value
+  const replayReads = replay === undefined || (isJson(replay) && onlyKeys(replay, ["paidOut", "deducted"]) && isCount(replay["paidOut"]) && isCount(replay["deducted"]))
+  const prizesRead = prizes === undefined || (isJson(prizes) && Object.keys(prizes).length > 0 && Object.entries(prizes).every(([name, tokens]) => filled(name) && isCount(tokens)))
+  return (rental === undefined || isCount(rental)) && replayReads && prizesRead
+}
+
+/** Whether a parlor's corners read: under the games it has, at least one corner in all, each by its rate. */
+const areTiers = (value: unknown): boolean => {
+  if (!isJson(value) || !Object.keys(value).every((game) => GAMES.has(game))) return false
+  const games = Object.values(value)
+  return games.every((corners) => isJson(corners) && Object.entries(corners).every(([name, terms]) => TIER.test(name) && isTier(terms))) && games.some((corners) => isJson(corners) && Object.keys(corners).length > 0)
+}
+
+/** How far ahead of today a line's day may be, in days: half a year, for a change made known before it comes. */
+const DAYS_AHEAD = 183
+
+/** Whether a day is one a line may be of: a day written as one, and no further ahead than a change is made known. */
+const isCheckedDay = (value: unknown): boolean => typeof value === "string" && DAY.test(value) && (Date.parse(value) - Date.now()) / 86_400_000 <= DAYS_AHEAD
+
+/** A line of corners by what tells it from another: the parlor and the day it was checked. */
+const checkedKey = (id: unknown, checked: unknown): string => `${String(id)} on ${String(checked)}`
+
+/**
+ * Every problem of one line of a parlor's corners: it is about a parlor
+ * the list has, by its id, as checked on one day. Rates change, so a
+ * parlor has a line for each day it was checked, the earlier ones kept as
+ * what held then — but one line a day.
+ */
+const tiersFindings = (value: unknown, parlors: ReadonlyMap<string, string>, told: ReadonlyMap<string, string>): readonly { readonly level: Finding["level"]; readonly message: string }[] => {
+  if (!isJson(value)) return [{ level: "error", message: "not a JSON object" }]
+  const { id, tiers, checked, submissions } = value
+  return [
+    ...(onlyKeys(value, ["id", "tiers", "checked", "submissions"]) ? [] : [{ level: "error" as const, message: "a field the format does not have" }]),
+    ...(filled(id) && parlors.has(id) ? [] : [{ level: "error" as const, message: `id of no listed parlor: ${String(id)}` }]),
+    ...(filled(id) && told.has(checkedKey(id, checked)) ? [{ level: "error" as const, message: `id ${id} checked ${String(checked)} also in ${told.get(checkedKey(id, checked)) ?? ""}` }] : []),
+    ...(areTiers(tiers) ? [] : [{ level: "error" as const, message: "tiers missing, empty or not as the format has them" }]),
+    ...(isCheckedDay(checked) ? [] : [{ level: "error" as const, message: "checked missing, not a day, or more than half a year ahead" }]),
+    ...(submissions === undefined || (Array.isArray(submissions) && submissions.length > 0 && submissions.every(filled)) ? [] : [{ level: "error" as const, message: "submissions empty" }]),
+  ]
+}
+
 const jsonOf = (line: string): unknown => {
   try {
     return JSON.parse(line)
@@ -105,9 +166,25 @@ const findingsOf = async (file: string, placed: boolean, seen: Map<string, strin
   })
 }
 
+/**
+ * The findings of the corners' file, held against the parlors of the two
+ * files before it. It is a file of its own on purpose, tied to the list by
+ * a parlor's id and nothing else, so it can be taken away whole.
+ */
+const tiersFindingsOf = async (file: string, parlors: ReadonlyMap<string, string>): Promise<readonly Finding[]> => {
+  const lines = (await Bun.file(join(import.meta.dir, "..", "data", file)).text()).split("\n").filter((line) => line !== "")
+  const told = new Map<string, string>()
+  return lines.flatMap((line, index) => {
+    const value = jsonOf(line)
+    const found = tiersFindings(value, parlors, told).map((finding) => ({ ...finding, file, line: index + 1 }))
+    if (isJson(value) && !told.has(checkedKey(value["id"], value["checked"]))) told.set(checkedKey(value["id"], value["checked"]), `${file}:${index + 1}`)
+    return found
+  })
+}
+
 const seen = new Map<string, string>()
 const named = new Map<string, string>()
-const findings = [...(await findingsOf("parlors.jsonl", true, seen, named)), ...(await findingsOf("unplaced.jsonl", false, seen, named))]
+const findings = [...(await findingsOf("parlors.jsonl", true, seen, named)), ...(await findingsOf("unplaced.jsonl", false, seen, named)), ...(await tiersFindingsOf("tiers.jsonl", seen))]
 const errors = findings.filter((finding) => finding.level === "error")
 const warnings = findings.filter((finding) => finding.level === "warning")
 for (const finding of errors.slice(0, 50)) console.error(`${finding.file}:${finding.line} ${finding.message}`)
