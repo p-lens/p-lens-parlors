@@ -2,3 +2,4 @@
 {"id":"osm:way/257619403","tiers":{"pachinko":{"4円":{"rental":250,"prizes":{"小":140}}},"pachislot":{"20円":{"rental":47,"prizes":{"小":27}}}},"checked":"2026-10-11","submissions":["01a129fa-d868-7a99-9e03-367d60647752"]}
 {"id":"osm:way/257619415","tiers":{"pachinko":{"4円":{"prizes":{"小":140}}}},"checked":"2026-10-18","submissions":["01a14d20-982a-747e-bcdc-4fe0ac674125"]}
 {"id":"osm:way/654472952","tiers":{"pachinko":{"4円":{"rental":250,"prizes":{"小":140}},"1円":{"rental":1000,"prizes":{"小":560}}},"pachislot":{"20円":{"rental":47,"prizes":{"小":27}},"8円":{"rental":125,"prizes":{"小":70}}}},"checked":"2026-10-18","submissions":["01a14d27-15c2-7b07-9aba-a40a1457fa4c"]}
+{"id":"op:marusan:80015a998c","tiers":{"pachinko":{"4円":{"rental":250,"prizes":{"小":140}},"1円":{"rental":1000,"prizes":{"小":560}}},"pachislot":{"20円":{"rental":50,"prizes":{"小":28}},"5円":{"rental":200,"prizes":{"小":112}}}},"checked":"2026-10-18","submissions":["01a14d2c-4648-7d2a-91c0-306038735f3a"]}
