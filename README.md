@@ -50,7 +50,7 @@ day, tied to the list by its `id` alone. Only parlors someone reported are in it
 are not.
 
 ```json
-{"id":"osm:way/…","tiers":{"pachinko":{"4円":{"rental":250,"replay":{"paidOut":125,"deducted":133},"prizes":{"大景品":1400,"小景品":140}},"1円":{"rental":1000}},"pachislot":{"20円":{"rental":50,"prizes":{"小景品":28}}}},"checked":"2026-10-11","submissions":["…"]}
+{"id":"osm:way/…","tiers":{"pachinko":{"4円":{"rental":250,"replay":{"paidOut":125,"deducted":133},"replayCap":25000,"prizes":{"大景品":1400,"小景品":140}},"1円":{"rental":1000}},"pachislot":{"20円":{"rental":50,"prizes":{"小景品":28}}}},"checked":"2026-10-11","submissions":["…"]}
 ```
 
 | Field | | |
@@ -59,6 +59,7 @@ are not.
 | `tiers` | always | Under `pachinko` and `pachislot`, the parlor's corners keyed by name — `4円`, `1円`, `20円`, `5円`, the rate the parlor advertises. As many corners as it has |
 | `tiers.*.*.rental` | when known | The rental: balls or medals for ¥1,000 |
 | `tiers.*.*.replay` | when known | The replay: `paidOut` (what it pays out) and `deducted` (what it takes off the savings), the same number where there is no fee |
+| `tiers.*.*.replayCap` | when known | The most balls or medals a member may replay in a day |
 | `tiers.*.*.prizes` | when known | The special prizes: under each prize's name as the parlor calls it (`大景品`, `小景品`, …), the balls or medals one of it takes. The smallest prize is the least that can be exchanged |
 | `checked` | always | The day the line's facts were checked (YYYY-MM-DD): that they held that day, not since when. A change posted before it comes is written with the day it begins, so the day may be up to half a year ahead |
 | `submissions` | later | The reports at survey.p-lens.jp the line was made from |
@@ -187,7 +188,7 @@ to review and the record as GeoJSON.
    `checked` the day the report says they were seen, the lines before left as
    they are — the corner 4円パチンコ as `pachinko`'s `4円`, 20円スロット as
    `pachislot`'s `20円`, 貸玉数 or 貸メダル数 as `rental`, the replay's two
-   counts as `replay`'s `paidOut` and `deducted` — and of its special prizes,
+   counts as `replay`'s `paidOut` and `deducted`, 再プレイ上限 as `replayCap` — and of its special prizes,
    each prize's name and the count it takes into that corner's `prizes`. What
    was received for a prize at the broker is not in the issue: survey.p-lens.jp
    takes that part out and sets it down in
