@@ -116,11 +116,11 @@ app.p-lens.jp does not read it.
   the operator's parlor was placed on an OpenStreetMap element, each member
   is placed on that same element. Names and addresses are facts; nothing
   else is taken from those sites.
-- **Parlors only OpenStreetMap knows** keep its name, and an address from the
-  element's own `addr:*` tags where it has them, else from the OpenStreetMap
-  administrative areas its position falls in — 市区町村, and 町丁目 where
-  OpenStreetMap has them — so `addressPrecision` says how far down it goes.
-  One whose name another placed parlor shares, widths, case, spaces and
+- **Parlors only OpenStreetMap knows** keep its name, and are listed only
+  where the element's own `addr:*` tags give an address down to the street
+  number: an element that says no more than where it stands is more often
+  a member of the fund or an operator's parlor drawn again, under a name
+  without its branch, than a parlor of its own. One whose name another placed parlor shares, widths, case, spaces and
   marks aside, is left out: a P-Lens book keeps a parlor's savings under its
   name, and two parlors under one name would be one account.
 - **Prefectures** of parlors placed from OpenStreetMap were inferred from

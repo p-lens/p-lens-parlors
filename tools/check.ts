@@ -46,6 +46,7 @@ const parlorFindings = (value: unknown, placed: boolean): readonly { readonly le
     ...(typeof prefecture === "string" && PREFECTURES.has(prefecture) ? [] : [{ level: "error" as const, message: `prefecture not one of the 47: ${String(prefecture)}` }]),
     ...(address === undefined || filled(address) ? [] : [{ level: "error" as const, message: "address empty or untrimmed" }]),
     ...(addressDescribed ? [] : [{ level: "error" as const, message: "address without a known addressSource and addressPrecision, or those without an address" }]),
+    ...(String(addressSource).startsWith("osm-") && addressPrecision !== "street" ? [{ level: "error" as const, message: "address from OpenStreetMap not down to the street number" }] : []),
     ...(officialUrl === undefined || (typeof officialUrl === "string" && /^https?:\/\//.test(officialUrl)) ? [] : [{ level: "error" as const, message: "officialUrl is not a web address" }]),
     ...(placed
       ? inJapan(lat, lon) ? [] : [{ level: "error" as const, message: "placed parlor without a position in Japan" }]
