@@ -52,7 +52,7 @@ parlors.p-lens.jp で静的ファイルとして公開します。app.p-lens.jp 
 | `tiers` | 必ず | `pachinko`・`pachislot` ごとに、コーナーの名前（`4円`、`1円`、`20円`、`5円` など、店が掲げているレート）をキーにしたコーナーの一覧。コーナーはいくつあってもかまいません |
 | `tiers.*.*.rental` | 分かる場合 | 貸し。1,000 円あたりの玉数・枚数 |
 | `tiers.*.*.replay` | 分かる場合 | 再プレイ。`paidOut`（払い出す数）と `deducted`（貯玉・貯メダルから引く数）。手数料がなければ同じ数 |
-| `tiers.*.*.replayCap` | 分かる場合 | 再プレイ上限。1 日に再プレイできる玉・メダルの数 |
+| `tiers.*.*.replayCap` | 分かる場合 | 再プレイ上限。1 日に再プレイできる玉・メダルの数。上限がなければ `unlimited` |
 | `tiers.*.*.prizes` | 分かる場合 | 特殊景品。景品の名前（`大景品`、`小景品` など、店舗での呼び方）をキーに、その景品 1 つに要る玉数・枚数。いちばん小さい景品が、交換できる最小の単位です |
 | `checked` | 必ず | この行の内容を確かめた日（YYYY-MM-DD）。その日にそうだった、ということで、いつからそうなのかは表しません。これから変わると掲示された内容は、変わる日を書くので、半年先までの日付になることがあります |
 | `submissions` | 後から | この行のもとになった survey.p-lens.jp の報告 |
@@ -115,7 +115,7 @@ Cloudflare の設定（Workers ＞ このリポジトリを接続）
 survey.p-lens.jp で送られた報告は、このリポジトリの issue になります（ラベルは `survey`、`parlor` と、`add`・`locate`・`gone`・`amend` のいずれか）。issue には確認のための表と、GeoJSON としての記録が入っています。
 
 1. issue を読み、出どころと内容を確かめる
-2. `data/parlors.jsonl` または `data/unplaced.jsonl` を直す。座標の分かった店舗は `unplaced.jsonl` から `parlors.jsonl` へ移す。「コーナーとレート」は `data/tiers.jsonl` に、報告の「確認した日」を `checked` とした新しい行として足す（前の行は書き換えない。コーナーの「4円パチンコ」は `pachinko` の `4円`、「20円スロット」は `pachislot` の `20円`、貸玉数・貸メダル数は `rental`、再プレイ払出・減数は `replay` の `paidOut`・`deducted`、再プレイ上限は `replayCap`）、「特殊景品」の景品の名前と必要な数は、そのコーナーの `prizes` に書く。交換所で受け取った額は issue には載りません。survey.p-lens.jp がそこだけ取り分けて、[p-lens-brokers](https://github.com/p-lens/p-lens-brokers) に観測として載せます
+2. `data/parlors.jsonl` または `data/unplaced.jsonl` を直す。座標の分かった店舗は `unplaced.jsonl` から `parlors.jsonl` へ移す。「コーナーとレート」は `data/tiers.jsonl` に、報告の「確認した日」を `checked` とした新しい行として足す（前の行は書き換えない。コーナーの「4円パチンコ」は `pachinko` の `4円`、「20円スロット」は `pachislot` の `20円`、貸玉数・貸メダル数は `rental`、再プレイ払出・減数は `replay` の `paidOut`・`deducted`、再プレイ上限は `replayCap`、「上限なし」は `"unlimited"`）、「特殊景品」の景品の名前と必要な数は、そのコーナーの `prizes` に書く。交換所で受け取った額は issue には載りません。survey.p-lens.jp がそこだけ取り分けて、[p-lens-brokers](https://github.com/p-lens/p-lens-brokers) に観測として載せます
 3. `bun run check`
 4. コミットのメッセージに `Closes #番号` と書いて `main` に入れる
 

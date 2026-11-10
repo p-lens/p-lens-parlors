@@ -64,11 +64,15 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/
 
 const isCount = (value: unknown): boolean => typeof value === "number" && Number.isInteger(value) && value > 0
 
+/** What a corner that lets a member replay as much as they like holds for `replayCap`, in place of a count. */
+const UNLIMITED = "unlimited"
+
 const onlyKeys = (value: Json, known: readonly string[]): boolean => Object.keys(value).every((key) => known.includes(key))
 
 /**
  * Whether a corner's terms read: each of them left out or a whole number
- * above zero, and nothing else said. A parlor rents tokens, takes them back
+ * above zero, the replay cap `unlimited` where there is none, and nothing
+ * else said. A parlor rents tokens, takes them back
  * on a replay, up to as many as it lets a member replay in a day, and gives
  * special prizes for them: each kind of prize by its name, with the tokens
  * it takes. It exchanges nothing for money, so a
@@ -79,7 +83,7 @@ const isTier = (value: unknown): boolean => {
   const { rental, replay, replayCap, prizes } = value
   const replayReads = replay === undefined || (isJson(replay) && onlyKeys(replay, ["paidOut", "deducted"]) && isCount(replay["paidOut"]) && isCount(replay["deducted"]))
   const prizesRead = prizes === undefined || (isJson(prizes) && Object.keys(prizes).length > 0 && Object.entries(prizes).every(([name, tokens]) => filled(name) && isCount(tokens)))
-  return (rental === undefined || isCount(rental)) && replayReads && (replayCap === undefined || isCount(replayCap)) && prizesRead
+  return (rental === undefined || isCount(rental)) && replayReads && (replayCap === undefined || replayCap === UNLIMITED || isCount(replayCap)) && prizesRead
 }
 
 /** Whether a parlor's corners read: under the games it has, at least one corner in all, each by its rate. */
