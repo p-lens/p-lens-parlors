@@ -60,6 +60,7 @@ are not.
 | `tiers.*.*.rental` | when known | The rental: balls or medals for ¥1,000 |
 | `tiers.*.*.replay` | when known | The replay: `paidOut` (what it pays out) and `deducted` (what it takes off the savings), the same number where there is no fee |
 | `tiers.*.*.replayCap` | when known | The most balls or medals a member may replay in a day, or `unlimited` where there is no cap |
+| `tiers.*.*.share` | when known | Whether a member may share the balls or medals they hold with a companion, dividing them onto the companion's card (持玉共有, 持玉分割): `true` or `false` |
 | `tiers.*.*.prizes` | when known | The special prizes: under each prize's name as the parlor calls it (`大景品`, `小景品`, …), the balls or medals one of it takes. The smallest prize is the least that can be exchanged |
 | `checked` | always | The day the line's facts were checked (YYYY-MM-DD): that they held that day, not since when. A change posted before it comes is written with the day it begins, so the day may be up to half a year ahead |
 | `submissions` | later | The reports at survey.p-lens.jp the line was made from |
@@ -188,7 +189,7 @@ to review and the record as GeoJSON.
    `checked` the day the report says they were seen, the lines before left as
    they are — the corner 4円パチンコ as `pachinko`'s `4円`, 20円スロット as
    `pachislot`'s `20円`, 貸玉数 or 貸メダル数 as `rental`, the replay's two
-   counts as `replay`'s `paidOut` and `deducted`, 再プレイ上限 as `replayCap`, 上限なし as `"unlimited"` — and of its special prizes,
+   counts as `replay`'s `paidOut` and `deducted`, 再プレイ上限 as `replayCap`, 上限なし as `"unlimited"`, 持玉共有（分割） as `share`, できる `true` and できない `false` — and of its special prizes,
    each prize's name and the count it takes into that corner's `prizes`. What
    was received for a prize at the broker is not in the issue: survey.p-lens.jp
    takes that part out and sets it down in

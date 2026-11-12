@@ -71,19 +71,20 @@ const onlyKeys = (value: Json, known: readonly string[]): boolean => Object.keys
 
 /**
  * Whether a corner's terms read: each of them left out or a whole number
- * above zero, the replay cap `unlimited` where there is none, and nothing
- * else said. A parlor rents tokens, takes them back
- * on a replay, up to as many as it lets a member replay in a day, and gives
+ * above zero, the replay cap `unlimited` where there is none, sharing
+ * `true` or `false`, and nothing else said. A parlor rents tokens, takes them back
+ * on a replay, up to as many as it lets a member replay in a day, may let a
+ * member share what they hold with a companion, and gives
  * special prizes for them: each kind of prize by its name, with the tokens
  * it takes. It exchanges nothing for money, so a
  * corner has `prizes` and never an exchange, and no yen.
  */
 const isTier = (value: unknown): boolean => {
-  if (!isJson(value) || !onlyKeys(value, ["rental", "replay", "replayCap", "prizes"])) return false
-  const { rental, replay, replayCap, prizes } = value
+  if (!isJson(value) || !onlyKeys(value, ["rental", "replay", "replayCap", "share", "prizes"])) return false
+  const { rental, replay, replayCap, share, prizes } = value
   const replayReads = replay === undefined || (isJson(replay) && onlyKeys(replay, ["paidOut", "deducted"]) && isCount(replay["paidOut"]) && isCount(replay["deducted"]))
   const prizesRead = prizes === undefined || (isJson(prizes) && Object.keys(prizes).length > 0 && Object.entries(prizes).every(([name, tokens]) => filled(name) && isCount(tokens)))
-  return (rental === undefined || isCount(rental)) && replayReads && (replayCap === undefined || replayCap === UNLIMITED || isCount(replayCap)) && prizesRead
+  return (rental === undefined || isCount(rental)) && replayReads && (replayCap === undefined || replayCap === UNLIMITED || isCount(replayCap)) && (share === undefined || typeof share === "boolean") && prizesRead
 }
 
 /** Whether a parlor's corners read: under the games it has, at least one corner in all, each by its rate. */
