@@ -200,3 +200,13 @@ to review and the record as GeoJSON.
 Once on `main`, publishing and closing the issue are automatic.
 survey.p-lens.jp and app.p-lens.jp read the list each time they are opened, so
 neither needs deploying again.
+
+A position report that only adds to the list is taken in without waiting
+for a person (`.github/workflows/intake.yml` runs `tools/intake.ts`): a
+position for a parlor that has none, or one within 30 m of where a parlor is
+placed. A contributor's later report is taken as correcting their earlier
+one, which goes into `rejections.jsonl`. A report that would move a placed
+parlor, reports more than 30 m apart, and every report that is not a
+position are labelled `needs-review` with the reason in a comment, and taken
+in by hand as above. Taking the label off and running the workflow by hand
+tries the issue again.

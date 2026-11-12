@@ -1,0 +1,34 @@
+# Takes in the survey reports that only add to the list, as tools/intake.ts
+# describes, as soon as survey.p-lens.jp opens them. Anything else is
+# labelled needs-review and left to a person; taking that label off and
+# running this by hand tries an issue again.
+name: intake
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: intake
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'survey')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun tools/intake.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
