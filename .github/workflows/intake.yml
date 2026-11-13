@@ -1,5 +1,6 @@
-# Takes in the survey reports that only add to the list, as tools/intake.ts
-# describes, as soon as survey.p-lens.jp opens them. Anything else is
+# Takes in the survey reports that only add to the list, and corrections of
+# a parlor's corners alone, as tools/intake.ts describes, as soon as
+# survey.p-lens.jp opens them. Anything else is
 # labelled needs-review and left to a person; taking that label off and
 # running this by hand tries an issue again.
 name: intake

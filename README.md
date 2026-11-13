@@ -14,7 +14,7 @@ data/tiers.jsonl       each parlor's corners and their rates, for the parlors so
 ```
 
 Published as static files at parlors.p-lens.jp. app.p-lens.jp reads
-`parlors.jsonl` and `rejections.jsonl`; survey.p-lens.jp reads `parlors.jsonl`
+`parlors.jsonl`, `unplaced.jsonl`, `rejections.jsonl` and `tiers.jsonl`; survey.p-lens.jp reads `parlors.jsonl`
 and `unplaced.jsonl` and takes reports that end up here.
 
 ## Format
@@ -87,7 +87,9 @@ special prizes come to is set apart in a repository of its own,
 The file is kept apart from the list **on purpose**. It includes a number
 parlors do not state in public, so the file can be removed alone should
 publishing it have to stop. Removing it does nothing to the list.
-app.p-lens.jp does not read it.
+app.p-lens.jp reads the rental and the special prizes of its 4-yen pachinko and
+20-yen pachislot corners, and fills them into a play's terms as a parlor is
+chosen. Removing the file only stops the app filling them in.
 
 ## Where the data comes from
 
@@ -206,8 +208,17 @@ A position report that only adds to the list is taken in without waiting
 for a person (`.github/workflows/intake.yml` runs `tools/intake.ts`): a
 position for a parlor that has none, or one within 30 m of where a parlor is
 placed. A contributor's later report is taken as correcting their earlier
-one, which goes into `rejections.jsonl`. A report that would move a placed
-parlor, reports more than 30 m apart, and every report that is not a
-position are labelled `needs-review` with the reason in a comment, and taken
-in by hand as above. Taking the label off and running the workflow by hand
+one, which goes into `rejections.jsonl`.
+
+A correction of a parlor's corners and special prizes, and of nothing else,
+is taken into `tiers.jsonl` without waiting too: as a new line where the
+parlor has none for the day it was checked, or put over that day's line
+corner by corner and field by field, the report added to its `submissions`
+(one line a parlor a day, as ever). A wrong or made-up report goes in as it
+is, and the next right one puts it right.
+
+A report that would move a placed parlor, reports more than 30 m apart, a
+correction of anything besides the corners, and every other report are
+labelled `needs-review` with the reason in a comment, and taken in by hand as
+above. Taking the label off and running the workflow by hand
 tries the issue again.

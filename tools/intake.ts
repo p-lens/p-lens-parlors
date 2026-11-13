@@ -1,9 +1,12 @@
 /**
  * Takes in, unattended, the survey reports that only add to the list: a
  * position for a parlor that has none, or one that agrees with where a
- * parlor is already placed. Everything else — a position that would move a
- * placed parlor, reports that disagree, any other kind of report — is left
- * to a person, labelled `needs-review` with the reason.
+ * parlor is already placed; and a correction that says nothing but a
+ * parlor's corners and their special prizes, added to `tiers.jsonl` as
+ * what was checked that day. Everything else — a position that would move
+ * a placed parlor, reports that disagree, a correction of anything else,
+ * any other kind of report — is left to a person, labelled `needs-review`
+ * with the reason.
  *
  *   bun tools/intake.ts                      read the open survey issues, apply, commit, push, close
  *   bun tools/intake.ts --dry-run            apply to data/ only: no commit, no push, nothing written to GitHub
@@ -79,11 +82,10 @@ const openIssues = async (): Promise<readonly Issue[]> => {
   }
 }
 
-/** The report an issue holds, or why it cannot be read as a position to take in; undefined when it is not a position report at all. */
-const reportOf = (issue: Issue): Report | string | undefined => {
-  const labels = issue.labels.map((label) => label.name)
-  if (!labels.includes("survey")) return undefined
-  if (!labels.includes("locate")) return `座標以外の報告（${labels.filter((label) => label !== "survey" && label !== "parlor").join("・") || "種類不明"}）は手で取り込む`
+/** What every survey report an issue holds is made of, read from its last JSON block, or why it cannot be read as one to take in. */
+type Feature = { readonly properties: Json; readonly observation: Json; readonly subject: Json; readonly provenance: Json; readonly source: string }
+
+const featureOf = (issue: Issue, kind: string): Feature | string => {
   if (issue.user.login !== SURVEY_BOT) return `${SURVEY_BOT} 以外が開いた Issue`
   const blocks = [...(issue.body ?? "").matchAll(/```json\n([\s\S]*?)\n```/g)]
   const last = blocks.at(-1)?.[1]
@@ -97,18 +99,35 @@ const reportOf = (issue: Issue): Report | string | undefined => {
   const properties = isJson(feature) ? feature["properties"] : undefined
   const observation = isJson(properties) ? properties["observation"] : undefined
   const subject = isJson(observation) ? observation["subject"] : undefined
-  const position = isJson(observation) ? observation["position"] : undefined
   const provenance = isJson(properties) ? properties["provenance"] : undefined
   const source = isJson(provenance) ? provenance["source"] : undefined
-  if (!isJson(properties) || !isJson(observation) || !isJson(subject) || !isJson(position) || !isJson(provenance) || !isJson(source)) return "報告の形が想定と違う"
-  if (properties["survey"] !== "parlor" || observation["kind"] !== "locate") return "座標の報告ではない"
+  if (!isJson(properties) || !isJson(observation) || !isJson(subject) || !isJson(provenance) || !isJson(source)) return "報告の形が想定と違う"
+  if (properties["survey"] !== "parlor" || observation["kind"] !== kind) return `${kind} の報告ではない`
   if (properties["license"] !== "CC0-1.0") return `ライセンスが CC0-1.0 でない: ${String(properties["license"])}`
-  const { latitude, longitude } = position
-  if (typeof latitude !== "number" || typeof longitude !== "number" || latitude < 20 || latitude > 46 || longitude < 122 || longitude > 154) return "座標が日本の範囲にない"
   if (typeof source["kind"] !== "string" || SOURCES[source["kind"]] === undefined) return `出典の種類が想定外: ${String(source["kind"])}`
-  const fields = [properties["id"], subject["id"], position["method"], provenance["observedOn"], properties["takenAt"], provenance["contributor"]]
+  const fields = [properties["id"], subject["id"], provenance["observedOn"], properties["takenAt"], provenance["contributor"]]
   if (!fields.every((field) => typeof field === "string" && field !== "")) return "報告に欠けている項目がある"
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(provenance["observedOn"]))) return "確認した日が日付でない"
+  return { properties, observation, subject, provenance, source: source["kind"] }
+}
+
+/** The kind of survey report an issue holds, by its labels; undefined when it is no survey report. */
+const kindOf = (issue: Issue): string | undefined => {
+  const labels = issue.labels.map((label) => label.name)
+  if (!labels.includes("survey")) return undefined
+  return labels.find((label) => label === "locate" || label === "amend") ?? `その他（${labels.filter((label) => label !== "survey" && label !== "parlor").join("・") || "種類不明"}）`
+}
+
+/** The position report an issue holds, or why it cannot be read as one to take in. */
+const reportOf = (issue: Issue): Report | string => {
+  const read = featureOf(issue, "locate")
+  if (typeof read === "string") return read
+  const { properties, observation, subject, provenance, source } = read
+  const position = observation["position"]
+  if (!isJson(position)) return "報告の形が想定と違う"
+  const { latitude, longitude } = position
+  if (typeof latitude !== "number" || typeof longitude !== "number" || latitude < 20 || latitude > 46 || longitude < 122 || longitude > 154) return "座標が日本の範囲にない"
+  if (typeof position["method"] !== "string" || position["method"] === "") return "報告に欠けている項目がある"
   return {
     issue: issue.number,
     submission: String(properties["id"]),
@@ -117,11 +136,115 @@ const reportOf = (issue: Issue): Report | string | undefined => {
     lon: longitude,
     method: String(position["method"]),
     basemap: typeof position["basemap"] === "string" ? position["basemap"] : undefined,
-    source: source["kind"],
+    source,
     observedOn: String(provenance["observedOn"]),
     takenAt: String(properties["takenAt"]),
     contributor: String(provenance["contributor"]),
   }
+}
+
+/** One corner's terms as `tiers.jsonl` writes them. */
+type CornerTerms = {
+  readonly rental?: number
+  readonly replay?: { readonly paidOut: number; readonly deducted: number }
+  readonly replayCap?: number | "unlimited"
+  readonly share?: boolean
+  readonly prizes?: Readonly<Record<string, number>>
+}
+
+/** A parlor's corners as `tiers.jsonl` writes them: by game, then by the rate the corner is named by. */
+type Corners = Readonly<Record<string, Readonly<Record<string, CornerTerms>>>>
+
+/** A correction that says nothing but a parlor's corners and their special prizes. */
+type CornerReport = {
+  readonly issue: number
+  readonly submission: string
+  readonly subject: string
+  readonly source: string
+  readonly observedOn: string
+  readonly corners: Corners
+}
+
+/** How the survey names a corner: its rate in yen and its game, `4円パチンコ`, `20円スロット`. */
+const CORNER = /^(\d+(?:\.\d+)?)円(パチンコ|スロット)$/
+
+const GAME_OF: Readonly<Record<string, string>> = { パチンコ: "pachinko", スロット: "pachislot" }
+
+/** The most balls or medals a count of a report may be, as the survey takes them. */
+const MOST_TOKENS = 100_000
+
+/** What the survey says for a replay cap where a corner has none, and for whether a member may share what they hold. */
+const NO_REPLAY_CAP = "上限なし"
+const SHARES: Readonly<Record<string, boolean>> = { できる: true, できない: false }
+
+const isTokens = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value > 0 && value <= MOST_TOKENS
+
+/** Where a corner the survey names goes in `tiers.jsonl`: its game and its rate. */
+const cornerAt = (label: unknown): { readonly game: string; readonly tier: string } | undefined => {
+  const found = typeof label === "string" ? CORNER.exec(label) : null
+  return found === null ? undefined : { game: GAME_OF[found[2] ?? ""] ?? "", tier: `${found[1] ?? ""}円` }
+}
+
+/** A row of the survey's corners as `tiers.jsonl` writes a corner, its fields in the format's order; or why it cannot be. */
+const cornerTermsOf = (row: Json): CornerTerms | string => {
+  const { rental, replayPaidOut, replayDeducted, replayCap, share } = row
+  if (rental !== undefined && !isTokens(rental)) return "貸玉数・貸メダル数が数でない"
+  if ((replayPaidOut === undefined) !== (replayDeducted === undefined) || (replayPaidOut !== undefined && (!isTokens(replayPaidOut) || !isTokens(replayDeducted)))) return "再プレイの払出・減数が揃っていない"
+  if (replayCap !== undefined && replayCap !== NO_REPLAY_CAP && !isTokens(replayCap)) return "再プレイ上限が数でない"
+  if (share !== undefined && (typeof share !== "string" || SHARES[share] === undefined)) return "持玉共有（分割）が想定外"
+  return {
+    ...(rental === undefined ? {} : { rental }),
+    ...(isTokens(replayPaidOut) && isTokens(replayDeducted) ? { replay: { paidOut: replayPaidOut, deducted: replayDeducted } } : {}),
+    ...(replayCap === undefined ? {} : { replayCap: replayCap === NO_REPLAY_CAP ? ("unlimited" as const) : (replayCap as number) }),
+    ...(typeof share === "string" ? { share: SHARES[share] } : {}),
+  }
+}
+
+const rowsOf = (value: unknown): readonly Json[] | undefined => (value === undefined ? [] : Array.isArray(value) && value.every(isJson) ? value : undefined)
+
+/** A corner's terms with another's put over them, field by field, and its prizes by name. */
+const overCorner = (before: CornerTerms | undefined, after: CornerTerms): CornerTerms => {
+  const prizes = before?.prizes === undefined && after.prizes === undefined ? undefined : { ...before?.prizes, ...after.prizes }
+  const { prizes: _before, ...kept } = before ?? {}
+  const { prizes: _after, ...told } = after
+  return { ...kept, ...told, ...(prizes === undefined ? {} : { prizes }) }
+}
+
+/** A parlor's corners with another report's put over them, corner by corner. */
+const overCorners = (before: Corners, after: Corners): Corners =>
+  Object.fromEntries(
+    [...new Set([...Object.keys(before), ...Object.keys(after)])].map((game) => [
+      game,
+      Object.fromEntries([...new Set([...Object.keys(before[game] ?? {}), ...Object.keys(after[game] ?? {})])].map((tier) => [tier, ((told) => (told === undefined ? (before[game]?.[tier] as CornerTerms) : overCorner(before[game]?.[tier], told)))(after[game]?.[tier])])),
+    ]),
+  )
+
+/** The correction an issue holds, where it says nothing but corners and their special prizes, or why it cannot be taken in unattended. */
+const cornerReportOf = (issue: Issue): CornerReport | string => {
+  const read = featureOf(issue, "amend")
+  if (typeof read === "string") return read
+  const { properties, observation, subject, provenance, source } = read
+  const attributes = observation["attributes"]
+  if (!isJson(attributes)) return "報告の形が想定と違う"
+  const others = Object.keys(attributes).filter((key) => key !== "tiers" && key !== "prizes")
+  if (others.length > 0) return `コーナーとレート以外の修正（${others.join("・")}）を含む`
+  const [tiers, prizes] = [rowsOf(attributes["tiers"]), rowsOf(attributes["prizes"])]
+  if (tiers === undefined || prizes === undefined || tiers.length + prizes.length === 0) return "コーナーとレートの形が想定と違う"
+  const placed = [...tiers, ...prizes].map((row) => cornerAt(row["corner"]))
+  if (placed.some((at) => at === undefined)) return "想定外のコーナー"
+  if (prizes.some((row) => typeof row["name"] !== "string" || row["name"].trim() === "" || !isTokens(row["tokens"]) || row["yen"] !== undefined)) return "特殊景品の名前か必要な数が想定外"
+  const terms = tiers.map(cornerTermsOf)
+  const wrong = terms.find((found): found is string => typeof found === "string")
+  if (wrong !== undefined) return wrong
+  const told: Corners = tiers.reduce<Corners>((corners, row, index) => {
+    const at = cornerAt(row["corner"]) as { game: string; tier: string }
+    return overCorners(corners, { [at.game]: { [at.tier]: terms[index] as CornerTerms } })
+  }, {})
+  const corners = prizes.reduce<Corners>((held, row) => {
+    const at = cornerAt(row["corner"]) as { game: string; tier: string }
+    return overCorners(held, { [at.game]: { [at.tier]: { prizes: { [String(row["name"]).trim()]: row["tokens"] as number } } } })
+  }, told)
+  return { issue: issue.number, submission: String(properties["id"]), subject: String(subject["id"]), source, observedOn: String(provenance["observedOn"]), corners }
 }
 
 /** Metres between two positions, on a sphere: close enough for pins a few dozen metres apart. */
@@ -227,12 +350,16 @@ const messageOf = (plan: Exclude<Plan, { kind: "hold" }>): string => {
 
 const issues = named.length > 0 ? await Promise.all(named.map(async (number) => (await api(`/issues/${number}`)) as Issue)) : await openIssues()
 const waitingIssues = issues.filter((issue) => !issue.labels.some((label) => label.name === HOLD))
-const read = waitingIssues.map((issue) => ({ issue, report: reportOf(issue) }))
+const kinds = waitingIssues.flatMap((issue) => ((kind) => (kind === undefined ? [] : [{ issue, kind }]))(kindOf(issue)))
+for (const { issue, kind } of kinds) if (kind !== "locate" && kind !== "amend") await hold([issue.number], `${kind} の報告は手で取り込む`)
+const read = kinds.filter(({ kind }) => kind === "locate").map(({ issue }) => ({ issue, report: reportOf(issue) }))
 for (const { issue, report } of read) if (typeof report === "string") await hold([issue.number], report)
+const corrections = kinds.filter(({ kind }) => kind === "amend").map(({ issue }) => ({ issue, report: cornerReportOf(issue) }))
+for (const { issue, report } of corrections) if (typeof report === "string") await hold([issue.number], report)
 
 const reports = read.flatMap(({ report }) => (typeof report === "object" ? [report] : []))
 const taken = new Set([
-  ...[...(await readLines("parlors.jsonl")), ...(await readLines("unplaced.jsonl"))].flatMap((line) => {
+  ...[...(await readLines("parlors.jsonl")), ...(await readLines("unplaced.jsonl")), ...(await readLines("tiers.jsonl"))].flatMap((line) => {
     const submissions = (JSON.parse(line) as Json)["submissions"]
     return Array.isArray(submissions) ? (submissions as string[]) : []
   }),
@@ -270,6 +397,40 @@ for (const group of Map.groupBy(fresh, (report) => report.subject).values()) {
   await git("add", "data")
   await git("commit", "--quiet", "--message", message)
   changed.push(...[...plan.kept, ...plan.superseded].map((report) => report.issue))
+}
+
+const cornerReports = corrections
+  .flatMap(({ report }) => (typeof report === "object" ? [report] : []))
+  .filter((report) => {
+    if (taken.has(report.submission)) console.log(`skip #${report.issue}: ${report.submission} is in the list already`)
+    return !taken.has(report.submission)
+  })
+  .sort((a, b) => a.issue - b.issue)
+for (const report of cornerReports) {
+  const parlor = [...(await readLines("parlors.jsonl")), ...(await readLines("unplaced.jsonl"))].map((line) => JSON.parse(line) as Parlor).find((each) => each.id === report.subject)
+  if (parlor === undefined) {
+    await hold([report.issue], `対象 ${report.subject} が一覧にない`)
+    continue
+  }
+  const lines = await readLines("tiers.jsonl")
+  const at = lines.findIndex((line) => ((value) => value["id"] === report.subject && value["checked"] === report.observedOn)(JSON.parse(line) as Json))
+  const before = at === -1 ? undefined : (JSON.parse(lines[at] as string) as Json)
+  const submissions = Array.isArray(before?.["submissions"]) ? (before["submissions"] as string[]) : []
+  const line = JSON.stringify({ id: report.subject, tiers: overCorners(isJson(before?.["tiers"]) ? (before["tiers"] as Corners) : {}, report.corners), checked: report.observedOn, submissions: [...submissions, report.submission] })
+  await writeLines("tiers.jsonl", at === -1 ? [...lines, line] : lines.map((each, index) => (index === at ? line : each)))
+  const how = `${SOURCES[report.source] ?? report.source} on ${report.observedOn}`
+  const body = at === -1 ? `Its corners and their special prizes were reported at survey.p-lens.jp, ${how}, and are added as what was checked that day.` : `Its corners and their special prizes were reported again at survey.p-lens.jp, ${how}, and are put over what was checked that day, corner by corner and field by field: the later report stands.`
+  const message = `${at === -1 ? "Take in" : "Put right"} ${parlor.name}'s corners, as reported\n\n${wrap(body)}\n\nCloses #${report.issue}\n`
+  console.log(`\n${message}`)
+  if (!(await checks())) {
+    await git("checkout", "--", "data")
+    await hold([report.issue], "取り込むと bun run check が通らない")
+    continue
+  }
+  if (dryRun) continue
+  await git("add", "data")
+  await git("commit", "--quiet", "--message", message)
+  changed.push(report.issue)
 }
 
 if (!dryRun && changed.length > 0) {
